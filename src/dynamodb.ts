@@ -6,9 +6,9 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { EncodingServiceImpl } from "./encoding";
-import { User, UserStatus, UserTypes } from "./types";
+import { Order, OrderStatus, OrderTypes } from "./types";
 
-const tableName = "User";
+const tableName = "Order";
 
 const client = new DynamoDB({
   endpoint: "http://localhost:8000",
@@ -62,18 +62,19 @@ export const createTable = async () => {
   }
 };
 
-export const putItem = async (input: User) => {
+export const putItem = async (input: Order) => {
   try {
     await client.putItem({
       TableName: tableName,
       Item: marshall({
-        PK: `USER#${input.id}`,
+        PK: `ORDER#${input.id}`,
         SK: `${input.type}`,
-        GSI1PK: `USER#${input.companyId}`,
+        GSI1PK: `ORDER#${input.companyId}`,
         GSI1SK: `${input.type}#${input.name}`,
         Id: input.id,
         CompanyId: input.companyId,
         Name: input.name,
+        UserId: input.userId,
         Status: input.status,
         Type: input.type,
       }),
@@ -92,7 +93,7 @@ export const findByCompanyAndType = async ({
   offset,
 }: {
   companyId: string;
-  type: UserTypes;
+  type: OrderTypes;
   name?: string;
   limit?: number;
   offset?: string;
@@ -104,9 +105,9 @@ export const findByCompanyAndType = async ({
     KeyConditionExpression: "GSI1PK = :gsi1pk AND begins_with(GSI1SK, :gsi1sk)",
     FilterExpression: "#status = :status",
     ExpressionAttributeValues: {
-      ":gsi1pk": { S: `USER#${companyId}` },
+      ":gsi1pk": { S: `ORDER#${companyId}` },
       ":gsi1sk": { S: `${type}#${name}` },
-      ":status": { S: UserStatus.ACTIVE },
+      ":status": { S: OrderStatus.OPEN },
     },
     ExpressionAttributeNames: {
       "#status": "status",
@@ -124,7 +125,7 @@ export const findByCompanyAndType = async ({
     request.ExclusiveStartKey = lastEvaluatedKey;
   }
 
-  const items: User[] = [];
+  const items: Order[] = [];
 
   do {
     if (lastEvaluatedKey) {
@@ -141,7 +142,7 @@ export const findByCompanyAndType = async ({
       const tokenItem = unmarshall(item);
 
       if (items.length < limit) {
-        items.push(tokenItem as User);
+        items.push(tokenItem as Order);
 
         if (items.length === limit && idx < Items.length - 1) {
           const keys = {

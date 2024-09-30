@@ -1,25 +1,26 @@
-export enum UserStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
+export enum OrderStatus {
+  OPEN = "OPEN",
+  SHIPPED = "SHIPPED",
 }
 
-export enum UserTypes {
-  ADMIN = "ADMIN",
-  USER = "USER",
-  GUEST = "GUEST",
+export enum OrderTypes {
+  COMMON = "COMMON",
+  PROMO = "PROMO",
 }
 
-export class User {
+export class Order {
   id: string;
   companyId: string;
   name: string;
-  status: UserStatus;
-  type: UserTypes;
+  userId: string;
+  status: OrderStatus;
+  type: OrderTypes;
 
-  constructor(input: User) {
+  constructor(input: Order) {
     this.id = input.id;
     this.companyId = input.companyId;
     this.name = input.name;
+    this.userId = input.userId;
     this.status = input.status;
     this.type = input.type;
   }
